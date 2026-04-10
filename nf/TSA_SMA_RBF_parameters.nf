@@ -1,8 +1,6 @@
 
 process TSA_SMA_RBF_parameters {
 
-    // inputs:
-    // AOI, Endmembers' AOI, endmember+variant, endmember's no, RMSE{TRUE,FALSE}, RBF sigma1, sigma2, sigma3, OUTPUT_TSI{TRUE,FALSE}, OUTPUT_SPL{TRUE,FALSE}, OUTPUT_LSP{TRUE,FALSE}
     input:
     tuple val(aoi), val(aoipar), val(name), val(endmember), val(rmse), val(sigma1), val(sigma2), val(sigma3), val(output_tsi), val(spl), val(lsp)
 
