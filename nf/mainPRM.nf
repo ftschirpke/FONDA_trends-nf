@@ -34,10 +34,13 @@ workflow {
 
     TSA_SMA_RBF_parameters_input = aoiCombinations.combine(parametersChannel)
 
+    // [CONFIG] Generate configuration files for FORCE
     SRAParamFiles = TSA_SMA_RBF_parameters( TSA_SMA_RBF_parameters_input )
     //   val(name),   path( "${name}_config.prm" ), val(aoi), val(aoipar) 
-    // = name ("gv"), config_path,                  aoi,      aoipar
-
+    // = name,        config_path,                  aoi,      aoipar
+    
+    // [FEATURE EXTRACTION] Spectral Mixture Analysis (SMA) - extract "endmembers" in or for pixel
+    // [INTERPOLATION] Radial Basis Function (RBF) filtering - remove noise and data holes caused by clouds etc.
     SMA_RBF( normalizedLevel2, masksChannel, SRAParamFiles, Tiles, endmembers)
 
     // sraData = SRAParamFiles
@@ -45,28 +48,43 @@ workflow {
     //    = "gv" (endmember+variang), aoi,                  aoipar,               aoi_aoipar,                         aoi_output_path
     smaDataGV = SMA_RBF.out.filter{it[0] == 'gv'}.map{ [ it[0], it[1], it[2], it[3],
                                   (it[4].findAll{it =~"S-LSP.tif"}).parent.parent.unique()]}
-
+    // [FEATURE EXTRACTION] determine start of season (SOS) and end of season (EOS) from data
     SOS_EOS(smaDataGV, file(params.soeosCode)).view()
 
+    // sraData = SRAParamFiles
+    // it = val("${sraData[0]}"),     val("${sraData[2]}"), val("${sraData[3]}"), val("${sraData[2]}_${sraData[3]}"), path( "output/${sraData[2]}_${sraData[3]}/${sraData[0]}/*/*" )
+    //    = name,                     aoi,                  aoipar,               aoi_aoipar (GROUP BY TARGET),       aoi_output_path
     rbfChannel = SMA_RBF.out.map{[it[0], it[1], it[2], it[3], 
                                  (it[4].parent.parent.unique()).collect()]}
                                  .groupTuple(by: 3)
                                  .map{[it[0], it[1], it[2], it[3], it[4].flatten()]}
 
 
+    // [AGGREGATION AND IMPUTATION] FOLD all data of e.g. a specific month into one, and FILL big holes in data
     FNF(rbfChannel, file(params.fnfCode))
 
+    // it = tuple val(sraData), val("${aoi[0]}"), val("${aoiprm[0]}"), val("${aoi_aoipar}"), path("${sraData[0]}")
+    //    = name,               aoi,              aoipar,              aoi_aoipar,           name_path (???)
     cefChannel = FNF.out.map{[it[0], it[1], it[2], it[3],
                              (it[4].parent)]}.view()
 
+    // [AGGREGATION] Cumulative Endmember Fractions (CEF) - Sum up endmember fractions e.g. over month based on SMA
     CEF(cefChannel, file(params.cefCode))
 
+    // it = tuple val(sraData), val(aoi), val(aoiprm), val(aoi_aoipar), path("${in_path}/cef")
+    //    = name,               aoi,      aoipar,      aoi_aoipar,      cef_name_path
     arChannel = CEF.out.map{[it[1], it[2], it[3], it[4]]}
 
+    // [TREND ANALYSIS] AutoRegression (AR) - some regression on the time series
     AR(arChannel, file(params.arCode))
     
+    // it = tuple val("${aoi}"), val("${aoipar}"), val("${aoi_aoipar}") , path("AR/${aoi_aoipar}")
+    //    = aoi,                 aoipar,           aoi_aoipar,            ARpath
     glsChannel = AR.out.map{[it[0], it[1], it[2], it[3]]}.view()
 
+    // [STATISTICS] Generalized Least Squares (GLS) - testing statistical hypotheses (?)
     GLS(glsChannel, params.glsCode).view()
+    //    = tuple val("${aoi}"), val("${aoipar}"), val("${aoi_aoipar}"), path("GLS/${aoi_aoipar}")
+    //    = aoi,                 aoipar,           aoi_aoipar,           GLSpath
 
 }
