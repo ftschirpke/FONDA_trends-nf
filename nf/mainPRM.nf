@@ -31,6 +31,10 @@ workflow {
         ["soil_wide",  3,"FALSE", 16, 48, 96, "TRUE", "FALSE", "FALSE"],
         ["shade_wide", 4,"FALSE", 16, 48, 96, "TRUE", "FALSE", "FALSE"]
     )
+    // gv    = green vegetation
+    // npv   = non-photosenthetically vegetation
+    // soil
+    // shade
 
     TSA_SMA_RBF_parameters_input = aoiCombinations.combine(parametersChannel)
 
