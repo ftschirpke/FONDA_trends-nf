@@ -1,0 +1,235 @@
+5a6
+> # :STATUS:          experimental
+10c11,14
+< #                   2023-04-21  pass parameters from the command line; iterate through all tiles in the cube
+---
+> #                   2023-10-30  QA bits: 4-NAN, 3-RBF32, 2-RBF-16, 1-monthly/original, 0-noData
+> #                   2026-04-17  nf revisited changes: new RBF input with >3 sigmas
+> # :TO-DOs:          improve speed - it is painfully slow... -> xarray?
+> #                   clean to free ram
+26d29
+< import sys
+30,40c33
+< if sys.argv[1] is None:
+< #    cube = r'J:\fonda\grassdata\force\unm'  # parent directory
+<   print('No input dir')
+< else:
+<     cube = (sys.argv[1])
+<     print(cube)
+< 
+< cubedir = list(os.listdir(os.path.join(cube, 'gv')))
+< tiles = [x for x in cubedir if x.startswith('X')]
+< 
+< os.chdir(cube)  # parent directory
+---
+> os.chdir(r'/data/Dagobah/fonda/grassdata/nf_trend_revisited/level3/')
+48,51c41,42
+< gvdirW = 'gv_wide'
+< npvdirW = 'npv_wide'
+< soildirW = 'soil_wide'
+< shadedirW = 'shade_wide'
+---
+> cubedir = list(os.listdir(os.path.join(cdir, 'gv')))
+> tiles = [x for x in cubedir if x.startswith('X')]
+54a46
+> 
+57,60c49,51
+< # with warnings.catch_warnings():
+<     # warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
+<     # warnings.filterwarnings(action='ignore', message='invalid value encountered in cast')
+< warnings.simplefilter("ignore", category=RuntimeWarning)
+---
+> with warnings.catch_warnings():
+>     warnings.simplefilter("ignore", category=RuntimeWarning)
+> 
+62a54
+> # tiles = tiles[1:1+nos]
+79,90c71,76
+<     # get paths to wide TSIs
+<     gvtileW = os.path.join(cdir, gvdirW, itile)
+<     npvtileW = os.path.join(cdir, npvdirW, itile)
+<     soiltileW = os.path.join(cdir, soildirW, itile)
+<     shtileW = os.path.join(cdir, shadedirW, itile)
+< 
+<     # unmixing data
+<     rmse = glob.glob(gvtile+'/*SMA_RMS.tif')
+<     gvtss = glob.glob(gvtile+'/*TSS.tif')
+<     npvtss = glob.glob(npvtile+'/*TSS.tif')
+<     soiltss = glob.glob(soiltile + '/*TSS.tif')
+<     shtss = glob.glob(shtile + '/*TSS.tif')
+---
+>    # unmixing data
+>     rmse = glob.glob(gvtile+'/RMS/*SMA_RMS.tif')
+>     gvtss = glob.glob(gvtile+'/TSS/*TSS.tif')
+>     npvtss = glob.glob(npvtile+'/TSS/*TSS.tif')
+>     soiltss = glob.glob(soiltile + '/TSS/*TSS.tif')
+>     shtss = glob.glob(shtile + '/TSS/*TSS.tif')
+93,105c79,83
+<     gvrbfp = glob.glob(gvtile+'/*TSI.tif')
+<     npvrbfp = glob.glob(npvtile + '/*TSI.tif')
+<     soilrbfp = glob.glob(soiltile + '/*TSI.tif')
+<     shrbfp = glob.glob(shtile + '/*TSI.tif')
+< 
+<     # 32-day RBF interpolation
+<     gvrbfpW = glob.glob(gvtileW+'/*TSI.tif')
+<     npvrbfpW = glob.glob(npvtileW + '/*TSI.tif')
+<     soilrbfpW = glob.glob(soiltileW + '/*TSI.tif')
+<     shrbfpW = glob.glob(shtileW + '/*TSI.tif')
+<     # sosStak = rasterio.open(rmse[0], "r", tiled=True, BIGTIFF='YES')
+<     # sos = sosStak.read()
+<     # sosStak.descriptions    # band names
+---
+>     gvrbfp = glob.glob(gvtile+'/TSI/*TSI.tif')
+>     npvrbfp = glob.glob(npvtile + '/TSI/*TSI.tif')
+>     soilrbfp = glob.glob(soiltile + '/TSI/*TSI.tif')
+>     shrbfp = glob.glob(shtile + '/TSI/*TSI.tif')
+> 
+118,122d95
+<     gvrbfW = gdal.Open(gvrbfpW[0])
+<     npvrbfW = gdal.Open(npvrbfpW[0])
+<     soilrbfW = gdal.Open(soilrbfpW[0])
+<     shrbfW = gdal.Open(shrbfpW[0])
+<     # print(gdal.Info(gv))
+137,142d109
+<     datDesRBFW = []
+<     for b2W in range(1, gvrbfW.RasterCount+1):
+<         bt2W = gvrbfW.GetRasterBand(b2W)
+<         dest2W = bt2W.GetDescription()
+<         datDesRBFW.append(dest2W)
+< 
+154,157d120
+<     # get dates from wide RBF layerstack
+<     datesYmdRBFW = []
+<     for n3 in range(0, len(datDesRBFW)):
+<         datesYmdRBFW.append(datetime.strptime(datDesRBFW[n3][0:8], "%Y%m%d"))
+167a131,133
+>     qaLS = np.empty((rms.GetRasterBand(1).ReadAsArray().shape[0],
+>                            rms.GetRasterBand(1).ReadAsArray().shape[1],1),
+>                     dtype=np.int8)*4
+183c149
+<             indRBFW = [index for index in range(len(datesYmdRBFW)) if fday <= datesYmdRBFW[index] <= lday]
+---
+>             # indRBFW = [index for index in range(len(datesYmdRBFW)) if fday <= datesYmdRBFW[index] <= lday]
+189a156
+>             qaRBFarr = np.ones((rms.RasterXSize, rms.RasterYSize, 1), dtype=np.int8) * (2)
+191,195c158
+<             gvRBFWarr = empty.copy()
+<             npvRBFWarr = empty.copy()
+<             soilRBFWarr = empty.copy()
+<             shRBFWarr = empty.copy()
+< 
+---
+>          
+203,207d165
+<             for bRW, bandRW in enumerate(indRBFW):  # will use the value passed by ind
+<                 gvRBFWarr[:, :, bRW] = gvrbfW.GetRasterBand(bandRW + 1).ReadAsArray()
+<                 npvRBFWarr[:, :, bRW] = npvrbfW.GetRasterBand(bandRW + 1).ReadAsArray()
+<                 soilRBFWarr[:, :, bRW] = soilrbfW.GetRasterBand(bandRW + 1).ReadAsArray()
+<                 shRBFWarr[:, :, bRW] = shrbfW.GetRasterBand(bandRW + 1).ReadAsArray()
+213,217c171
+< 
+<             gvRBFWarr[gvRBFWarr == -9999] = np.nan
+<             npvRBFWarr[npvRBFWarr == -9999] = np.nan
+<             soilRBFWarr[soilRBFWarr == -9999] = np.nan
+<             shRBFWarr[shRBFWarr == -9999] = np.nan
+---
+>             # qaRBFarr[gvRBFarr == -9999] = np.nan
+222a177,178
+>             qaRBFarr[np.isnan(gvRBFComp)] = 4
+>             qaRBFarr[gvRBFComp == 0] = 0
+224,239c180,193
+<             gvRBFWmean = np.nanmean(gvRBFWarr[:, :, :], axis=2)
+<             npvRBFWmean = np.nanmean(npvRBFWarr[:, :, :], axis=2)
+<             soilRBFWmean = np.nanmean(soilRBFWarr[:, :, :], axis=2)
+<             shRBFWmean = np.nanmean(shRBFWarr[:, :, :], axis=2)
+< 
+<             # fill in the 0s and nan in 8-day RBF with 16-day RBF
+<             gvMa = np.squeeze(np.any([[gvRBFComp == 0], [np.isnan(gvRBFComp)]], axis=0), axis=(0))
+<             npvMa = np.squeeze(np.any([[npvRBFComp == 0], [np.isnan(npvRBFComp)]], axis=0), axis=(0))
+<             soilMa = np.squeeze(np.any([[soilRBFComp == 0], [np.isnan(soilRBFComp)]], axis=0), axis=(0))
+<             shMa = np.squeeze(np.any([[shRBFComp == 0], [np.isnan(shRBFComp)]], axis=0), axis=(0))
+< 
+<             gvRBFComp[gvMa] = gvRBFWmean[gvMa]
+<             # gvRBFComp[gvRBFComp == 0 | np.isnan(gvRBFComp)] = gvRBFWmean[gvRBFComp == 0 | np.isnan(gvRBFComp)]
+<             npvRBFComp[npvMa] = npvRBFWmean[npvMa]
+<             soilRBFComp[soilMa] = soilRBFWmean[soilMa]
+<             shRBFComp[shMa] = shRBFWmean[shMa]
+---
+> 
+>             # # fill in the 0s and nan in 8-day RBF with 16-day RBF
+>             # gvMa = np.squeeze(np.any([[gvRBFComp == 0], [np.isnan(gvRBFComp)]], axis=0), axis=(0))
+>             # npvMa = np.squeeze(np.any([[npvRBFComp == 0], [np.isnan(npvRBFComp)]], axis=0), axis=(0))
+>             # soilMa = np.squeeze(np.any([[soilRBFComp == 0], [np.isnan(soilRBFComp)]], axis=0), axis=(0))
+>             # shMa = np.squeeze(np.any([[shRBFComp == 0], [np.isnan(shRBFComp)]], axis=0), axis=(0))
+> 
+>             # gvRBFComp[gvMa] = gvRBFWmean[gvMa]
+>             # # gvRBFComp[gvRBFComp == 0 | np.isnan(gvRBFComp)] = gvRBFWmean[gvRBFComp == 0 | np.isnan(gvRBFComp)]
+>             # npvRBFComp[npvMa] = npvRBFWmean[npvMa]
+>             # soilRBFComp[soilMa] = soilRBFWmean[soilMa]
+>             # shRBFComp[shMa] = shRBFWmean[shMa]
+>             # qaRBFarr[gvMa] = qaRBFWarr[gvMa]
+>             # # qaarr = np.zeros((rms.RasterXSize, rms.RasterYSize, 1), dtype=np.int8)
+242a197,198
+>                 qaComp = np.ones((rms.RasterXSize, rms.RasterYSize, 1), dtype=np.int8)
+> 
+251a208
+>                     # qaarr = np.zeros((rms.RasterXSize, rms.RasterYSize, 1), dtype=np.int8)
+307a265,266
+>                 qaComp[gvMs] = qaRBFarr[gvMs]
+> 
+316a276,279
+>                 qaComp = qaRBFarr
+> 
+>             qaComp[gvRBFComp == np.nan] = 4
+>             qaComp[gvRBFComp == 0] = 0
+322a286
+>             qaLS = np.append(qaLS, np.atleast_3d(qaComp), axis=2)
+331a296
+>     qaOutP = os.path.join(gvtile, nOut + '_FnF_QA.tif')
+337a303
+>     qaLS = qaLS[:, :, 1:qaLS.shape[2]]
+390d355
+< print('execution took ', datetime.now() - startTime)
+392c357,367
+< # :END OF THE CODE: #
+---
+>     gvProfile.update(dtype='uint8')
+>     gvProfile.update(nodata='255')
+>     with rasterio.open(qaOutP, 'w', **gvProfile) as dst:
+>         for ith, outbn in enumerate(bandNames):
+>             dst.set_band_description(ith+1, outbn)
+>             dst.update_tags(ith + 1, ns='FORCE', Date=outbn[0:4] + '-' + outbn[4:6] + '-' + outbn[6:8])
+>             dst.update_tags(ith + 1, ns='FORCE', Wavelength_unit='decimal year')
+>             dst.update_tags(ith + 1, ns='FORCE', Domain='SMA_TSA')
+>         # rasterio needs the band axis first.
+>         dst.write(np.moveaxis(qaLS,-1,0), list(range(1,qaLS.shape[2]+1)))
+>         dst.close()
+393a369
+> print('execution took ', datetime.now() - startTime)
+395,418c371
+< # debug
+< #
+< # gvOutP = gvtile + '\\' + nOut + '_gv2020_03_stack_gvM.tif'
+< # gvProfile = gvStak.profile
+< # gvProfile.update(count=4)
+< # with rasterio.open(gvOutP, 'w', **gvProfile) as dst:
+< #     dst.set_band_description(1, xnames[0])
+< #     dst.set_band_description(2, xnames[1])
+< #     dst.set_band_description(3, xnames[2])
+< #     dst.set_band_description(4, xnames[3])
+< #     # dst.update_tags(1, ns='FORCE', Date=bandNames[0][0:4] + '-' + bandNames[0][4:6] + '-' + bandNames[0][6:8])
+< #     dst.update_tags(1, ns='FORCE', Date=xnames[0][0:4] + '-' + xnames[0][4:6] + '-' + xnames[0][6:8])
+< #     dst.update_tags(2, ns='FORCE', Date=xnames[1][0:4] + '-' + xnames[1][4:6] + '-' + xnames[1][6:8])
+< #     dst.update_tags(3, ns='FORCE', Date=xnames[2][0:4] + '-' + xnames[2][4:6] + '-' + xnames[2][6:8])
+< #     dst.update_tags(4, ns='FORCE', Date=xnames[3][0:4] + '-' + xnames[3][4:6] + '-' + xnames[3][6:8])
+< #     dst.update_tags(1, ns='FORCE', Wavelength_unit='decimal year')
+< #     dst.update_tags(1, ns='FORCE', Domain='SMA_TSA')
+< #     dst.update_tags(2, ns='FORCE', Domain='SMA_TSA')
+< #     dst.update_tags(3, ns='FORCE', Domain='SMA_TSA')
+< #     dst.update_tags(4, ns='FORCE', Domain='SMA_TSA')
+< #     # rasterio needs the band axis first.
+< #     dst.write(np.moveaxis(gvM,-1,0), [1,2,3,4])
+< #     # dst.write(np.moveaxis(gvComp, -1, 0), 1)
+< #     dst.close()
+---
+> # :END OF THE CODE: #

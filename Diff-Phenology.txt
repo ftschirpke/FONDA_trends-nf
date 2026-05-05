@@ -1,0 +1,26 @@
+5a6
+> # :STATUS:          experimental
+8a10
+> #               17 Apr 2026: nf revisited changes 
+25,27c27,28
+< if sys.argv[1] is None:
+< #    cube = r'J:\fonda\grassdata\force\nf_tests\level2'  # parent directory
+<   print('No input dir')
+---
+> if len(sys.argv) < 2:
+>     cube = r'/data/Dagobah/fonda/grassdata/nf_trend_revisited/level3/gv'  # parent directory
+34a36
+> 
+37,39c39,40
+< # with warnings.catch_warnings():
+< #     warnings.simplefilter("ignore", category=RuntimeWarning)
+< warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
+---
+> with warnings.catch_warnings():
+>     warnings.simplefilter("ignore", category=RuntimeWarning)
+48,49c49,50
+<     sosPath = glob.glob(os.path.join(cube, fl, '*SMA_DSS-LSP.tif'))
+<     eosPath = glob.glob(os.path.join(cube, fl, '*SMA_DES-LSP.tif'))
+---
+>     sosPath = glob.glob(os.path.join(cube, fl, 'DSS-POL/*SMA_DSS-POL.tif'))
+>     eosPath = glob.glob(os.path.join(cube, fl, 'DES-POL/*SMA_DES-POL.tif'))

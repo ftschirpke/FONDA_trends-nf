@@ -1,0 +1,52 @@
+5a6
+> # :STATUS:          experimental
+7c8
+< # :UPDATES:
+---
+> # :UPDATES:     17 Apr 2026: nf revisited changes 
+12a14,15
+> import copy
+> import shutil
+15a19
+> import sys
+18d21
+< import sys
+23,25c26,27
+< if sys.argv[1] is None:
+< #    cube = r'J:\fonda\grassdata\force\unm'  # parent directory
+<   print('No input dir')
+---
+> if len(sys.argv) < 2:
+>     parentDir = r'/data/Dagobah/fonda/grassdata/nf_trend_revisited/level3/'  # parent directory
+30d31
+< # parentDir = r'J:\fonda\grassdata\force\unm'  # parent directory
+51,52c52,53
+<     SoS = glob.glob(os.path.join(parentDir, 'gv', fl, '*DSS-LSP_DOY_25.tif'))
+<     EoS = glob.glob(os.path.join(parentDir, 'gv', fl, '*DES-LSP_DOY_75.tif'))
+---
+>     SoS = glob.glob(os.path.join(parentDir, 'gv', fl, 'DSS-POL/*DSS-POL_DOY_25.tif'))
+>     EoS = glob.glob(os.path.join(parentDir, 'gv', fl, 'DES-POL/*DES-POL_DOY_75.tif'))
+119a121
+>         # cefMask[b - 1, (np.squeeze(np.all([[sosMonth > eosMonth], [sosMonth > b], [eosMonth < b]], axis=0), axis=0))] = 1
+161,164c163,170
+<         gvCEF = np.nansum(gvSub * cefMask, axis=0)
+<         npvCEF = np.nansum(npvSub * cefMask, axis=0)
+<         soilCEF = np.nansum(soilSub * cefMask, axis=0)
+<         shCEF = np.nansum(shSub * cefMask, axis=0)
+---
+>         gvCEF = np.nansum(gvSub.astype('float64') * cefMask, axis=0)
+>         npvCEF = np.nansum(npvSub.astype('float64') * cefMask, axis=0)
+>         soilCEF = np.nansum(soilSub.astype('float64') * cefMask, axis=0)
+>         shCEF = np.nansum(shSub.astype('float64') * cefMask, axis=0)
+>         # gvCEF = np.sum(np.where(np.isnan(cefMask), np.nan, gvSub),  axis=0)
+>         # npvCEF = np.sum(np.where(np.isnan(cefMask), np.nan, npvSub), axis=0)
+>         # soilCEF = np.sum(np.where(np.isnan(cefMask), np.nan, soilSub), axis=0)
+>         # shCEF = np.sum(np.where(np.isnan(cefMask), np.nan, shSub), axis=0)
+225,231d230
+< 
+< 
+<     # sosProfile = SoSDataset.profile
+<     # sosOut = os.path.join(outTileDir,'SOS_month.tif')
+<     # with rasterio.open(sosOut, 'w', **sosProfile) as dst:
+<     #     dst.write(sosMonth, 1)
+<     #     dst.close()

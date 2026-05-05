@@ -1,0 +1,24 @@
+6c6,7
+< # :UPDATES:     11.05.2023:   Linux implementation without ncore
+---
+> # :STATUS:          experimental
+> # :UPDATES:         11.05.2023:   Linux implementation without ncore
+7a9
+> # :UPDATES:         2026-04-17  nf revisited changes: new RBF input with >3 sigmas
+36,49c38
+< if(AOI=='ALP') {tiles <- c('X0061_Y0061','X0062_Y0061','X0061_Y0062')}
+< if(AOI=='BX') {tiles <- c('X0052_Y0040','X0052_Y0041','X0053_Y0040','X0053_Y0041')} # BB8
+< if(AOI=='CR') {tiles <- c('X0107_Y0103','X0108_Y0103')} # BB8
+< if(AOI=='DE') {tiles <- c('X0067_Y0042','X0067_Y0043','X0068_Y0042','X0068_Y0043')}
+< if(AOI=='ES') {tiles <- c('X0015_Y0086','X0016_Y0086','X0015_Y0087','X0016_Y0086')}
+< if(AOI=='FR') {tiles <- c('X0047_Y0065','X0048_Y0065','X0047_Y0066','X0048_Y0066')}
+< if(AOI=='IE') {tiles <- c('X0020_Y0038','X0020_Y0039','X0021_Y0038','X0021_Y0039')}
+< if(AOI=='LX') {tiles <- c('X0052_Y0053')}
+< if(AOI=='PL') {tiles <- c('X0087_Y0038','X0088_Y0038','X0089_Y0038')} # BB8
+< if(AOI=='RO') {tiles <- c('X0095_Y0060','X0095_Y0061','X0096_Y0060','X0096_Y0061')} # BB8
+< # if(AOI=='SA') {tiles <- c('X0058_Y0087','X0059_Y0087','X0058_Y0088','X0059_Y0088')} # BB8
+< if(AOI=='SA') {tiles <- c('X0058_Y0087')} # BB8 TEST
+< if(AOI=='SE') {tiles <- c('X0068_Y0022','X0069_Y0022','X0068_Y0023','X0069_Y0023')} # BB8
+< if(AOI=='UK') {tiles <- c('X0034_Y0033','X0034_Y0034','X0035_Y0033','X0035_Y0034')}
+---
+> if(AOI=='DE') {tiles <- c('X0067_Y0042')}
