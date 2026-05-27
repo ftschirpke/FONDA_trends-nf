@@ -1,9 +1,11 @@
 include { FORCE_HIGHER_LEVEL } from './modules/force.nf'
-
+include { PHENOLOGY_SOS_EOS } from './modules/phenology_sos_eos.nf'
 
 workflow {
-    def endmember = "https://github.com/nf-core/test-datasets/raw/rangeland/endmember/hostert-2003.txt"
     def cube = "/data/level2_norm/datacube-definition.prj"
 
-    FORCE_HIGHER_LEVEL (params.ids, cube, endmember)
+    def endmembers = Channel.from("gv", "npv", "soil", "shade")
+
+    FORCE_HIGHER_LEVEL (params.ids, cube, endmembers)
+    PHENOLOGY_SOS_EOS (FORCE_HIGHER_LEVEL.out.ids.filter { id, endmem -> endmem == "gv" } )
 }

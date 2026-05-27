@@ -13,19 +13,19 @@ process FORCE_HIGHER_LEVEL {
     val(endmember)
 
     output:
-    tuple val(id), path ('trend/*.tif*'), optional: true, emit: trend_files
-    path '*.prm'                                          , emit: prm
-    path "versions.yml"                                   , emit: versions
+    tuple val(id), val(endmember)        , emit: ids
+    path ('trend/*.tif*'), optional: true, emit: trend_files
+    path('*.prm')                        , emit: prm
 
     script:
 
     // paths // TODO: remove hard-coded paths
     def ardBasePath  = "/data/level2_norm/"
     def ardPath      = "$ardBasePath${id}/"
-    def maskDirPath = "/work-dir/mask/"
+    def maskDirPath = "/data/mask/"
     def maskPath     = "$maskDirPath${id}/"
-    def trendPath    = "/work-dir/level3/${endmember}"
-    def provPath     = "/work-dir/prov/"
+    def trendPath    = "/data/level3/${endmember}"
+    def provPath     = "/data/prov/"
 
     // def start_date     = "1984-01-01"  // TODO: find correct value
     // def end_date       = "2025-12-31"  // TODO: find correct value
@@ -92,7 +92,7 @@ process FORCE_HIGHER_LEVEL {
     // QAI screening
     def qaiScreen          = task.ext.args?.getAt("SCREEN_QAI")            ? "SCREEN_QAI = ${task.ext.args["SCREEN_QAI"]}"                       : "SCREEN_QAI = NODATA CLOUD_OPAQUE CLOUD_BUFFER CLOUD_CIRRUS CLOUD_SHADOW SNOW SUBZERO SATURATION"
     def aboveNoise         = task.ext.args?.getAt("ABOVE_NOISE")           ? "ABOVE_NOISE = ${task.ext.args["ABOVE_NOISE"]}"                     : "ABOVE_NOISE = 0"
-    def belowNoise         = task.ext.args?.getAt("BELOW_NOISE")           ? "BELOW_NOISE = ${"BELOW_NOISE"}"                                    : "BELOW_NOISE = 0"
+    def belowNoise         = task.ext.args?.getAt("BELOW_NOISE")           ? "BELOW_NOISE = ${task.ext.args["BELOW_NOISE"]}"                     : "BELOW_NOISE = 0"
 
     // Processing timeframe
     def dateRange          = task.ext.args?.getAt("DATE_RANGE")            ? "DATE_RANGE = ${task.ext.args["DATE_RANGE"]}"                       : "DATE_RANGE = 2010-01-01 2019-12-31"
@@ -178,12 +178,17 @@ process FORCE_HIGHER_LEVEL {
     def changePenalty      = task.ext.args?.getAt("CHANGE_PENALTY")        ? "CHANGE_PENALTY = ${task.ext.args["CHANGE_PENALTY"]}"               : "CHANGE_PENALTY = FALSE"
 
     """
+    mkdir -p ${trendPath}
+
+    echo ">>>"
+    ls -lisah /data
+    echo "<<<"
+    
     CHUNKSIZE='${chunkSize}'
     if [[ "\$CHUNKSIZE" == "CHUNK_SIZE = 0 0" ]]; then
         TILESIZE=\$(sed '6q;d' $cube)
         CHUNKSIZE="CHUNK_SIZE = \$TILESIZE"
     fi
-    echo "Determined chunk size: \$CHUNKSIZE"
 
     PARAM=./tsa_${id}.prm
     cat <<EOF > \$PARAM
@@ -283,11 +288,5 @@ process FORCE_HIGHER_LEVEL {
     EOF
 
     force-higher-level \$PARAM
-
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        force: \$(force-higher-level -v)
-    END_VERSIONS
     """
 }
