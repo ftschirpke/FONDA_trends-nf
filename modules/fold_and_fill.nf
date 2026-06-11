@@ -1,10 +1,10 @@
-process PHENOLOGY_SOS_EOS {
+process FOLD_AND_FILL {
 
     container "pangeo/pangeo-notebook"
     // TODO: consider a smaller image
 
     input:
-    tuple val(id), val(endmember)
+    val(id)
 
     output:
     val(id), emit: ids
@@ -16,7 +16,7 @@ process PHENOLOGY_SOS_EOS {
     def scriptBasePath = "/data/wf/codes_prm/cef"
 
     """
-    python ${scriptBasePath}/01_Phenology_sos_eos.py ${trendBasePath}/${endmember} ${id}
+    python ${scriptBasePath}/03_FoldAndFill.py ${trendBasePath} ${id}
     """
 
 }

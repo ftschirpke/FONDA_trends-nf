@@ -56,7 +56,7 @@ for(i in tiles){
   print(i)
 
   # gv
-  in_gv <- list.files(file.path(inDir, i), 'gv_ARres.tif$', full.names=TRUE)
+  in_gv <- list.files(inDir, paste(i, 'gv_ARres.tif$', sep='-'), full.names=TRUE)
   GVar <- stack(in_gv)
 
   gv.df <- data.frame('Row'=rowFromCell(object=GVar, cell=1:ncell(GVar)),
@@ -81,7 +81,7 @@ for(i in tiles){
   GV.df <- rbind.data.frame(GV.df, gv.df)
 
   # npv
-  in_npv <- list.files(file.path(inDir, i), 'npv_ARres.tif$', full.names=TRUE)
+  in_npv <- list.files(inDir, paste(i, 'npv_ARres.tif$', sep='-'), full.names=TRUE)
   NPVar <- stack(in_npv)
 
   npv.df <- data.frame('Row'=rowFromCell(object=NPVar, cell=1:ncell(NPVar)),
@@ -106,7 +106,7 @@ for(i in tiles){
   NPV.df <- rbind.data.frame(NPV.df, npv.df)
 
   # soil
-  in_soil <- list.files(file.path(inDir, i), 'soil_ARres.tif$', full.names=TRUE)
+  in_soil <- list.files(inDir, paste(i, 'soil_ARres.tif$', sep='-'), full.names=TRUE)
   SOILar <- stack(in_soil)
 
   soil.df <- data.frame('Row'=rowFromCell(object=SOILar, cell=1:ncell(SOILar)),
@@ -131,7 +131,7 @@ for(i in tiles){
   SOIL.df <- rbind.data.frame(SOIL.df, soil.df)
 
   # shade
-  in_sh <- list.files(file.path(inDir, i), 'shade_ARres.tif$', full.names=TRUE)
+  in_sh <- list.files(inDir, paste(i, 'shade_ARres.tif$', sep='-'), full.names=TRUE)
   SHar <- stack(in_sh)
 
   sh.df <- data.frame('Row'=rowFromCell(object=SHar, cell=1:ncell(SHar)),

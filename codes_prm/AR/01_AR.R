@@ -21,7 +21,8 @@ library(graphics)
 # :INPUTS: #
 
 inDir <- args[1]
-outDir <- args[2]
+i <- args[2]
+outDir <- args[3]
 
 # test if there is at least one argument: if not, return an error
 if (length(args)==0) {
@@ -30,9 +31,6 @@ if (length(args)==0) {
 
 # inDir <- 'J:/fonda/grassdata/force/cef'
 # outDir <- 'J:/fonda/grassdata/force/trends'
-
-tiles <- list.dirs(inDir, full.names = FALSE)
-tiles <- grep('^X', tiles, value = TRUE)
 
 # :SETUP: #
 ncores = 10 # cores
@@ -84,93 +82,91 @@ raster_AR <- function(x, na.rm = FALSE, time = 1:length(x)){
 
 # :CODE: #
 
-for(i in tiles){
-  print(i)
-  #prepare output dir
-  if (!dir.exists(file.path(outDir, i))){
-    dir.create(file.path(outDir, i))
-  }
-
-  # gv
-  in_gv = list.files(file.path(inDir, i), 'gv_cef.tif', full.names=TRUE)
-  GVstk <- brick(in_gv)
-  NANmask <- calc(GVstk, sum)
-  GVstk[NANmask==0] = NA
-
-    ## SETUP ##
-    ## check/change options
-    # rasterOptions() # print current options
-    rasterOptions(maxmemory = maxmem_Bytes, # increase memory for calculations to 8GB
-                  chunksize = chunk_size)
-    # rasterOptions() # print new options
-
-    ## check if raster is in memory
-    inMemory(GVstk)
-
-    ## check if we can process the stack in memory
-    canProcessInMemory(GVstk, verbose = TRUE)
-
-    ## Here's the formula to caclulate approximately how much RAM (GB) is needed to process 4-8 copies of the entire stack:
-    # 8 * c(4, 8) * ncell(GVstk) * nlayers(GVstk) / 1e9
-
-  out_gv = file.path(outDir, i, 'gv_ARres.tif')
-  print(out_gv)
-  beginCluster(ncores)
-  stack_AR_mc = clusterR(GVstk,
-                         fun = calc,
-                         args = list(fun = raster_ARres, na.rm = TRUE),
-                         filename = out_gv,
-                         overwrite = TRUE)
-  endCluster()
-
-  # npv
-  in_npv = list.files(file.path(inDir, i), 'npv_cef.tif', full.names=TRUE)
-  NPVstk <- brick(in_npv)
-  NPVstk[NANmask==0] = NA
-
-  out_npv = file.path(outDir, i, 'npv_ARres.tif')
-  print(out_npv)
-
-  beginCluster(ncores)
-  stack_AR_mc = clusterR(NPVstk,
-                         fun = calc,
-                         args = list(fun = raster_ARres, na.rm = TRUE),
-                         filename = out_npv,
-                         overwrite = TRUE)
-  endCluster()
-
-
-  # soil
-  in_soil = list.files(file.path(inDir, i), 'soil_cef.tif', full.names=TRUE)
-  SOILstk <- brick(in_soil)
-  SOILstk[NANmask==0] = NA
-
-  out_soil = file.path(outDir, i, 'soil_ARres.tif')
-  print(out_soil)
-
-  beginCluster(ncores)
-  stack_AR_mc = clusterR(SOILstk,
-                         fun = calc,
-                         args = list(fun = raster_ARres, na.rm = TRUE),
-                         filename = out_soil,
-                         overwrite = TRUE)
-  endCluster()
-
-  # shade
-  in_shade = list.files(file.path(inDir, i), 'shade_cef.tif', full.names=TRUE)
-  SHADEstk <- brick(in_shade)
-  SHADEstk[NANmask==0] = NA
-
-  out_shade = file.path(outDir, i, 'shade_ARres.tif')
-  print(out_shade)
-
-  beginCluster(ncores)
-  stack_AR_mc = clusterR(SHADEstk,
-                         fun = calc,
-                         args = list(fun = raster_ARres, na.rm = TRUE),
-                         filename = out_shade,
-                         overwrite = TRUE)
-  endCluster()
+print(i)
+#prepare output dir
+if (!dir.exists(file.path(outDir))){
+dir.create(file.path(outDir))
 }
+
+# gv
+in_gv = list.files(inDir, 'gv_cef.tif', full.names=TRUE)
+GVstk <- brick(in_gv)
+NANmask <- calc(GVstk, sum)
+GVstk[NANmask==0] = NA
+
+## SETUP ##
+## check/change options
+# rasterOptions() # print current options
+rasterOptions(maxmemory = maxmem_Bytes, # increase memory for calculations to 8GB
+              chunksize = chunk_size)
+# rasterOptions() # print new options
+
+## check if raster is in memory
+inMemory(GVstk)
+
+## check if we can process the stack in memory
+canProcessInMemory(GVstk, verbose = TRUE)
+
+## Here's the formula to caclulate approximately how much RAM (GB) is needed to process 4-8 copies of the entire stack:
+# 8 * c(4, 8) * ncell(GVstk) * nlayers(GVstk) / 1e9
+
+out_gv = file.path(outDir, paste(i, 'gv_ARres.tif', sep='-'))
+print(out_gv)
+beginCluster(ncores)
+stack_AR_mc = clusterR(GVstk,
+                     fun = calc,
+                     args = list(fun = raster_ARres, na.rm = TRUE),
+                     filename = out_gv,
+                     overwrite = TRUE)
+endCluster()
+
+# npv
+in_npv = list.files(inDir, 'npv_cef.tif', full.names=TRUE)
+NPVstk <- brick(in_npv)
+NPVstk[NANmask==0] = NA
+
+out_npv = file.path(outDir, paste(i, 'npv_ARres.tif', sep='-'))
+print(out_npv)
+
+beginCluster(ncores)
+stack_AR_mc = clusterR(NPVstk,
+                     fun = calc,
+                     args = list(fun = raster_ARres, na.rm = TRUE),
+                     filename = out_npv,
+                     overwrite = TRUE)
+endCluster()
+
+
+# soil
+in_soil = list.files(inDir, 'soil_cef.tif', full.names=TRUE)
+SOILstk <- brick(in_soil)
+SOILstk[NANmask==0] = NA
+
+out_soil = file.path(outDir, paste(i, 'soil_ARres.tif', sep='-'))
+print(out_soil)
+
+beginCluster(ncores)
+stack_AR_mc = clusterR(SOILstk,
+                     fun = calc,
+                     args = list(fun = raster_ARres, na.rm = TRUE),
+                     filename = out_soil,
+                     overwrite = TRUE)
+endCluster()
+
+# shade
+in_shade = list.files(inDir, 'shade_cef.tif', full.names=TRUE)
+SHADEstk <- brick(in_shade)
+SHADEstk[NANmask==0] = NA
+
+out_shade = file.path(outDir, paste(i, 'shade_ARres.tif', sep='-'))
+print(out_shade)
+
+beginCluster(ncores)
+stack_AR_mc = clusterR(SHADEstk,
+                     fun = calc,
+                     args = list(fun = raster_ARres, na.rm = TRUE),
+                     filename = out_shade,
+                     overwrite = TRUE)
+endCluster()
 
 # :END OF THE CODE: #
