@@ -1,6 +1,6 @@
 process GLS {
 
-    container "friedricht/nf-trends:v2"
+    container "friedricht/nf-trends:v5"
 
     input:
     val(ids)

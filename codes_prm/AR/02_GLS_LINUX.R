@@ -15,6 +15,7 @@ args = commandArgs(trailingOnly=TRUE)
 # :ENVIRONMENT: #
 suppressPackageStartupMessages(library(raster))
 suppressPackageStartupMessages(library(rgdal))
+suppressPackageStartupMessages(library(terra))
 suppressPackageStartupMessages(library(remotePARTS))
 suppressPackageStartupMessages(library(snow))
 suppressPackageStartupMessages(library(parallel))
@@ -194,23 +195,19 @@ rm(gv.df) ;  rm(npv.df) ;  rm(soil.df) ;   rm(sh.df)
 
 ## GV ##
 
-# coordinates & time
-coords <- data.frame(GV.df5[,c('lng', 'lat')])
-# recalculate LAEA(3035) to WGS84(4326)
-coordinates(coords) <- c('lng', 'lat')
-proj4string(coords) <- CRS("+init=epsg:3035")
-coordsLL <- spTransform(coords, CRS("+init=epsg:4326"))
+# recalculate LAEA(3035) to WGS84(4326) using terra
+coords_v <- vect(as.matrix(GV.df5[, c('lng', 'lat')]), crs="EPSG:3035")
+coordsLL_v <- project(coords_v, "EPSG:4326")
+coordsLL <- geom(coordsLL_v)[, c("x", "y")]
+colnames(coordsLL) <- c("lng", "lat")
 
-xmin <- coordsLL@coords[coordsLL@coords[,'lng']== min(coordsLL@coords[,'lng'])]
-xmax <- coordsLL@coords[coordsLL@coords[,'lng']== max(coordsLL@coords[,'lng'])]
-ymin <- coordsLL@coords[coordsLL@coords[,'lat']== min(coordsLL@coords[,'lat'])]
-ymax <- coordsLL@coords[coordsLL@coords[,'lat']== max(coordsLL@coords[,'lat'])]
+xmin <- coordsLL[coordsLL[,'lng'] == min(coordsLL[,'lng']), ]
+xmax <- coordsLL[coordsLL[,'lng'] == max(coordsLL[,'lng']), ]
+ymin <- coordsLL[coordsLL[,'lat'] == min(coordsLL[,'lat']), ]
+ymax <- coordsLL[coordsLL[,'lat'] == max(coordsLL[,'lat']), ]
 
-d.mat <- rbind(c(xmin),c(xmax),c(ymin),c(ymax))
-
+d.mat <- rbind(c(xmin), c(xmax), c(ymin), c(ymax))
 max.dist <- max(distm_km(d.mat))
-
-coordsLL <- coordsLL@coords
 
 coordsLL_temp <- coordsLL
 colnames(coordsLL_temp) <- c('LON', 'LAT')
@@ -225,7 +222,7 @@ GV.df5 <- cbind(GV.df5,coordsLL_temp)
 time.int = 1:(nlayers(GVar)-4) # time points as standard integers
 time.scaled = scale(time.int)
 # residuals
-GV.residuals = GV.df5[,6:ncol(GV.df5)]
+GV.residuals = GV.df5[,6:(ncol(GV.df5)-2)]
 
 # calculate range from residuals
 fitno = 3000
@@ -295,14 +292,11 @@ saveRDS(GV.t.test, file = paste0(outDir,'/',AOI,'_gv5_ttest.RDS'))
 ## NPV ##
 
 
-# coordinates & time
-coords <- data.frame(NPV.df5[,c('lng', 'lat')])
-# recalculate LAEA(3035) to WGS84(4326)
-coordinates(coords) <- c('lng', 'lat')
-proj4string(coords) <- CRS("+init=epsg:3035")
-coordsLL <- spTransform(coords, CRS("+init=epsg:4326"))
-
-coordsLL <- coordsLL@coords
+# recalculate LAEA(3035) to WGS84(4326) using terra
+coords_v <- vect(as.matrix(NPV.df5[, c('lng', 'lat')]), crs="EPSG:3035")
+coordsLL_v <- project(coords_v, "EPSG:4326")
+coordsLL <- geom(coordsLL_v)[, c("x", "y")]
+colnames(coordsLL) <- c("lng", "lat")
 
 coordsLL_temp <- coordsLL
 colnames(coordsLL_temp) <- c('LON', 'LAT')
@@ -314,7 +308,7 @@ NPV.df5 <- cbind(NPV.df5,coordsLL_temp)
 time.int = 1:(nlayers(NPVar)-4) # time points as standard integers
 time.scaled = scale(time.int)
 # residuals
-NPV.residuals = NPV.df5[,6:ncol(NPV.df5)]
+NPV.residuals = NPV.df5[,6:(ncol(NPV.df5)-2)]
 
 # calculate range from residuals
 fitno = 3000
@@ -384,14 +378,11 @@ saveRDS(NPV.t.test, file = paste0(outDir,'/',AOI,'_npv5_ttest.RDS'))
 ## SOIL ##
 
 
-# coordinates & time
-coords <- data.frame(SOIL.df5[,c('lng', 'lat')])
-# recalculate LAEA(3035) to WGS84(4326)
-coordinates(coords) <- c('lng', 'lat')
-proj4string(coords) <- CRS("+init=epsg:3035")
-coordsLL <- spTransform(coords, CRS("+init=epsg:4326"))
-
-coordsLL <- coordsLL@coords
+# recalculate LAEA(3035) to WGS84(4326) using terra
+coords_v <- vect(as.matrix(SOIL.df5[, c('lng', 'lat')]), crs="EPSG:3035")
+coordsLL_v <- project(coords_v, "EPSG:4326")
+coordsLL <- geom(coordsLL_v)[, c("x", "y")]
+colnames(coordsLL) <- c("lng", "lat")
 
 coordsLL_temp <- coordsLL
 colnames(coordsLL_temp) <- c('LON', 'LAT')
@@ -403,7 +394,7 @@ SOIL.df5 <- cbind(SOIL.df5,coordsLL_temp)
 time.int = 1:(nlayers(SOILar)-4) # time points as standard integers
 time.scaled = scale(time.int)
 # residuals
-SOIL.residuals = SOIL.df5[,6:ncol(SOIL.df5)]
+SOIL.residuals = SOIL.df5[,6:(ncol(SOIL.df5)-2)]
 
 # calculate range from residuals
 fitno = 3000
@@ -472,14 +463,11 @@ saveRDS(SOIL.t.test, file = paste0(outDir,'/',AOI,'_soil5_ttest.RDS'))
 ## SH ##
 
 
-# coordinates & time
-coords <- data.frame(SH.df5[,c('lng', 'lat')])
-# recalculate LAEA(3035) to WGS84(4326)
-coordinates(coords) <- c('lng', 'lat')
-proj4string(coords) <- CRS("+init=epsg:3035")
-coordsLL <- spTransform(coords, CRS("+init=epsg:4326"))
-
-coordsLL <- coordsLL@coords
+# recalculate LAEA(3035) to WGS84(4326) using terra
+coords_v <- vect(as.matrix(SH.df5[, c('lng', 'lat')]), crs="EPSG:3035")
+coordsLL_v <- project(coords_v, "EPSG:4326")
+coordsLL <- geom(coordsLL_v)[, c("x", "y")]
+colnames(coordsLL) <- c("lng", "lat")
 
 coordsLL_temp <- coordsLL
 colnames(coordsLL_temp) <- c('LON', 'LAT')
@@ -491,7 +479,7 @@ SH.df5 <- cbind(SH.df5,coordsLL_temp)
 time.int = 1:(nlayers(SHar)-4) # time points as standard integers
 time.scaled = scale(time.int)
 # residuals
-SH.residuals = SH.df5[,6:ncol(SH.df5)]
+SH.residuals = SH.df5[,6:(ncol(SH.df5)-2)]
 
 # calculate range from residuals
 fitno = 3000

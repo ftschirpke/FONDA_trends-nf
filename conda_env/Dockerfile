@@ -2,13 +2,17 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         software-properties-common \
-        dirmngr \
-        gnupg2 \
-        wget \
         ca-certificates \
+        gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        dirmngr \
+        wget \
         cmake \
         python3-pip \
         python3-dev \
@@ -17,6 +21,8 @@ RUN apt-get install -y --no-install-recommends \
         libgeos-dev \
         libproj-dev \
         libspatialindex-dev \
+        libtbb-dev \
+        libnetcdf-dev \
         libtiff-dev \
         libjpeg-dev \
         libpng-dev \
@@ -56,3 +62,4 @@ RUN mkdir -p ~/.R && \
 
 RUN Rscript -e "options(warn=2);install.packages('remotePARTS')"
 RUN Rscript -e "options(warn=2);install.packages('rgdal', repos='https://packagemanager.posit.co/cran/2023-10-03')"
+RUN Rscript -e "options(warn=2);remotes::install_github('rspatial/terra')"
