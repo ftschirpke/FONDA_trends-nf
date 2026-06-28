@@ -17,39 +17,35 @@ FROM r-base:4.2.2
 # disable interactive frontends
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
-  apt-get install -y \
-  libcurl4-openssl-dev \
-  libfontconfig1-dev \
-  libfreetype6-dev \
-  libfribidi-dev \
-  libgdal-dev \
-  libharfbuzz-dev \
-  libjpeg-dev \
-  libpng-dev \
-  libssh2-1-dev \
-  libssl-dev \
-  libtiff5-dev \
-  libxml2-dev \
-  zlib1g-dev \
-  cmake
-RUN Rscript -e "install.packages(c('devtools', 'dplyr'))" && \
+RUN apt-get update -o Acquire::AllowInsecureRepositories=true || true && \
+    apt-get install -y --allow-unauthenticated debian-archive-keyring && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        cmake \
+        libcurl4-openssl-dev \
+        libfontconfig1-dev \
+        libfreetype6-dev \
+        libfribidi-dev \
+        libgdal-dev \
+        libharfbuzz-dev \
+        libjpeg-dev \
+        libpng-dev \
+        libssh2-1-dev \
+        libssl-dev \
+        libtiff5-dev \
+        libxml2-dev \
+        zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN Rscript -e "options(warn=2); install.packages(c('devtools', 'dplyr', 'snow', 'doParallel', 'foreach', 'raster', 'data.table'), repos='https://cloud.r-project.org')" && \
     Rscript -e "devtools::install_github('morrowcj/remotePARTS')" && \
-    Rscript -e "install.packages(c('snow', 'parallel', 'doParallel', 'foreach', 'graphics'))" && \
-    Rscript -e "install.packages(c('raster', 'data.table', 'rgdal'))" && \
+    Rscript -e "install.packages('sp', repos='https://cloud.r-project.org')" && \
+    Rscript -e "install.packages('rgdal_1.6-7.tar.gz', repos=NULL, type='source')" && \
+    rm rgdal_1.6-7.tar.gz
+RUN apt-get clean && rm -r /var/cache/
 
-# RUN R -e "install.packages(c('devtools','testthat', 'roxygen2'), dependencies=TRUE, repos='https://cran.rstudio.com')" && \
-# RUN R -e 'install.packages("devtools", dependencies=TRUE, repos="http://cran.rstudio.com/")'  && \
-#    R -e ', install.packages("remotePARTS", dependencies=TRUE, repos="http://cran.rstudio.com/")'  && \
-
-#RUN Rscript -e install.packages("devtools")  && \
-#    Rscript -e install.packages("remotePARTS")  && \
-
-    # Clear installation data
-    apt-get clean && rm -r /var/cache/
 
 ENV HOME /home/docker
-# ENV PATH $HOME/docker/bin
 
 WORKDIR /home/docker
 

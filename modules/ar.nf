@@ -1,7 +1,6 @@
 process AR {
 
-    container "rocker/geospatial"
-    // TODO: consider a smaller image
+    container "friedricht/nf-trends:v2"
 
     input:
     val(id)
@@ -19,7 +18,7 @@ process AR {
 
     """
     mkdir ${outPath}
-    R ${scriptBasePath}/01_AR.R ${trendBasePath}/cef/${id} ${id} ${outPath}
+    Rscript ${scriptBasePath}/01_AR.R ${trendBasePath}/cef/${id} ${id} ${outPath}
     """
 
 }

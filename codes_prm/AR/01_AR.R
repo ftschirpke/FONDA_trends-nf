@@ -85,7 +85,7 @@ raster_AR <- function(x, na.rm = FALSE, time = 1:length(x)){
 print(i)
 #prepare output dir
 if (!dir.exists(file.path(outDir))){
-dir.create(file.path(outDir))
+    dir.create(file.path(outDir))
 }
 
 # gv

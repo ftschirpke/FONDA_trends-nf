@@ -33,7 +33,7 @@ fl = sys.argv[2]
 
 # :CODE: #
 #prepare output directory
-outDir = os.path.join(os.path.dirname(parentDir),'cef')
+outDir = os.path.join(parentDir,'cef')
 if os.path.exists(outDir) is False:
     os.mkdir(outDir)
 

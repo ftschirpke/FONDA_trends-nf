@@ -1,7 +1,6 @@
 process GLS {
 
-    container "friedricht/nf-rscript:latest"
-    // TODO: consider a smaller image
+    container "friedricht/nf-trends:v2"
 
     input:
     val(ids)
