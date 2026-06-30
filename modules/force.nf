@@ -11,35 +11,33 @@ process FORCE_HIGHER_LEVEL {
     val(id)
     path(cube)
     val(endmember)
+    path(ardDir)
+    path(maskDir)
+    val(start_date)
+    val(end_date)
 
     output:
-    tuple val(id), val(endmember)        , emit: ids
-    path ('trend/*.tif*'), optional: true, emit: trend_files
-    path('*.prm')                        , emit: prm
+    tuple val(id), val(endmember)          , emit: ids
+    path ('trend/**/.tif*'), optional: true, emit: trend_files
+    path ('prov/*.txt'),     optional: true, emit: provenance
+    path('*.prm')                          , emit: prm
 
     script:
 
-    // paths // TODO: remove hard-coded paths
-    def ardBasePath  = "/data/level2_norm/"
-    def ardPath      = "$ardBasePath${id}/"
-    def maskDirPath = "/data/mask/"
-    def maskPath     = "$maskDirPath${id}/"
-    def trendPath    = "/data/level3/${endmember}"
-    def provPath     = "/data/prov/"
+    def dirLower       = "DIR_LOWER = ./${ardDir}"
+    def dirHigher      = "DIR_HIGHER = ./trend"
+    def dirProv        = "DIR_PROVENANCE = ./prov"
+    
+    def mask           = maskDir.name != 'null'
+    def dirMask        = mask ? "DIR_MASK = ./${maskDir}" : "DIR_MASK = NULL"
+    def baseMask       = mask ? "BASE_MASK = ${id}"        : "BASE_MASK = NULL"
 
-    // def start_date     = "1984-01-01"  // TODO: find correct value
-    // def end_date       = "2025-12-31"  // TODO: find correct value
-    def start_date     = "2023-07-01"  // TODO: remove this test value
-    def end_date       = "2023-12-31"  // TODO: remove this test value
     def sensors_level2 = "LND04 LND05 LND07 LND08 LND09"
     def allow_list     = null
 
     def defaultEndmemberNums = ["gv": 1, "npv": 2, "soil": 3, "shade": 4]
     def endmemberNums = task.ext.args?.getAt("OUTPUT_FORMAT") ? task.ext.args["OUTPUT_FORMAT"] : defaultEndmemberNums
     def endmemberNum = endmemberNums.getAt(endmember)
-
-    // TODO: configure mask i.e. GRA_2018_10m_conv_noData.tif
-    def mask           = false
 
     // TODO: configure file output options i.e. codes_prm/L2_file_output_options_custom.txt
     // TODO: configure tile ranges i.e. X_TILE_RANGE = 15 108, Y_TILE_RANGE = 22 103
@@ -48,15 +46,6 @@ process FORCE_HIGHER_LEVEL {
     // extract tile
     def xTile = id[1..4]
     def yTile = id[7..10]
-
-    // Input/Output directories
-    def dirLower           = "DIR_LOWER = $ardBasePath"
-    def dirHigher          = "DIR_HIGHER = $trendPath"
-    def dirProv            = "DIR_PROVENANCE = $provPath"
-
-    // Masking
-    def dirMask            = mask                                          ? "DIR_MASK = $maskDirPath"                                           : "DIR_MASK = NULL"
-    def baseMask           = mask                                          ? "BASE_MASK = $maskPath"                                             : "BASE_MASK = NULL"
 
     // Output options
     def outputFormat       = task.ext.args?.getAt("OUTPUT_FORMAT")         ? "OUTPUT_FORMAT = ${task.ext.args["OUTPUT_FORMAT"]}"                 : "OUTPUT_FORMAT = GTiff"
@@ -178,7 +167,8 @@ process FORCE_HIGHER_LEVEL {
     def changePenalty      = task.ext.args?.getAt("CHANGE_PENALTY")        ? "CHANGE_PENALTY = ${task.ext.args["CHANGE_PENALTY"]}"               : "CHANGE_PENALTY = FALSE"
 
     """
-    mkdir -p ${trendPath}
+    mkdir -p trend
+    mkdir -p prov
 
     echo ">>>"
     ls -lisah /data
